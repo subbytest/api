@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/api/db/:table", "destination": "/api/db?table=:table" }
+  ]
+}
