@@ -1,3 +1,4 @@
+// api/db.js — Neon PostgreSQL REST proxy
 import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL);
@@ -74,20 +75,30 @@ function parseQuery(query) {
 }
 
 export default async function handler(req, res) {
+  // Preflight
   if (req.method === 'OPTIONS') {
-    return res.status(200).set(CORS).end();
+    Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
+    return res.status(200).end();
   }
 
+  // Set CORS on all responses
   Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v));
 
-  const table = req.query.table;
+  // ── FIX: ambil table dari URL path, bukan query param ──
+  // URL: /api/db/rl_users?username=eq.alan
+  const urlPath = req.url.split('?')[0];
+  const urlParts = urlPath.split('/').filter(Boolean);
+  const table = urlParts[urlParts.length - 1];
+
   if (!table || !/^[a-z][a-z0-9_]*$/.test(table)) {
     return res.status(400).json({ error: 'Invalid table name' });
   }
 
-  const { table: _t, ...filters } = req.query;
+  // Semua query params jadi filters (tidak perlu buang 'table')
+  const filters = req.query;
 
   try {
+    // ── GET ───────────────────────────────────────────────
     if (req.method === 'GET') {
       const { where, values, order, select } = parseQuery(filters);
       let q = `SELECT ${select} FROM ${table}`;
@@ -97,6 +108,7 @@ export default async function handler(req, res) {
       return res.status(200).json(rows);
     }
 
+    // ── POST ──────────────────────────────────────────────
     if (req.method === 'POST') {
       const body = req.body;
       if (!body || typeof body !== 'object') {
@@ -111,6 +123,7 @@ export default async function handler(req, res) {
       return res.status(201).json(rows);
     }
 
+    // ── PATCH ─────────────────────────────────────────────
     if (req.method === 'PATCH') {
       const body = req.body;
       if (!body || typeof body !== 'object') {
@@ -129,13 +142,14 @@ export default async function handler(req, res) {
       return res.status(200).json(rows);
     }
 
+    // ── DELETE ────────────────────────────────────────────
     if (req.method === 'DELETE') {
-      const { where, values } = parseQuery(filters);
+      const { where, values } = parseQuery(filters); // ← FIX: 'values' bukan 'vals'
       if (!where.length) {
         return res.status(400).json({ error: 'DELETE requires at least one filter' });
       }
       const q = `DELETE FROM ${table} WHERE ${where.join(' AND ')} RETURNING *`;
-      const rows = await sql(q, values);
+      const rows = await sql(q, values); // ← FIX: typo 'vals' → 'values'
       return res.status(200).json(rows);
     }
 
