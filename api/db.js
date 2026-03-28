@@ -15,7 +15,9 @@ const ALLOWED_TABLES = new Set([
   // Duitku
   'dk_users', 'dk_wallets', 'dk_trx', 'dk_budgets', 'dk_savings', 'dk_routines',
   // Brompit
-  'rl_users', 'rl_motors', 'rl_bbm', 'rl_fuel', 'rl_parts', 'rl_service'
+  'rl_users', 'rl_motors', 'rl_bbm', 'rl_fuel', 'rl_parts', 'rl_service',
+  // Tanduran
+  'bq_users', 'bq_plants', 'bq_journals', 'bq_photos', 'bq_usermeta'
 ]);
 
 const MAX_LIMIT = 500;
