@@ -1,6 +1,15 @@
 // api/db.js — Neon PostgreSQL REST proxy
 import { neon } from '@neondatabase/serverless';
 
+// Naikkan body size limit — default Vercel hanya 1MB, foto base64 bisa 200-500KB
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 const sql = neon(process.env.DATABASE_URL);
 
 const CORS = {
